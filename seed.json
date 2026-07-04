@@ -1,0 +1,79 @@
+{
+  "concursos": [
+    {
+      "id": "bb_2025",
+      "nome": "Banco do Brasil 2025",
+      "instituicao": "Banco do Brasil",
+      "nivel": "medio",
+      "ano": 2025,
+      "disciplinas": ["portugues", "matematica", "informatica", "atualidades"],
+      "active": true
+    },
+    {
+      "id": "caixa_2024",
+      "nome": "Caixa Econômica 2024",
+      "instituicao": "Caixa",
+      "nivel": "medio",
+      "ano": 2024,
+      "disciplinas": ["portugues", "matematica", "informatica", "atualidades"],
+      "active": true
+    }
+  ],
+  "disciplinas": [
+    {
+      "id": "portugues",
+      "nome": "Português",
+      "icone": "📝",
+      "cor": "#4F46E5",
+      "ordem": 1
+    },
+    {
+      "id": "matematica",
+      "nome": "Matemática",
+      "icone": "🔢",
+      "cor": "#10B981",
+      "ordem": 2
+    },
+    {
+      "id": "informatica",
+      "nome": "Informática",
+      "icone": "💻",
+      "cor": "#F59E0B",
+      "ordem": 3
+    },
+    {
+      "id": "atualidades",
+      "nome": "Atualidades",
+      "icone": "📰",
+      "cor": "#EF4444",
+      "ordem": 4
+    },
+    {
+      "id": "logica",
+      "nome": "Raciocínio Lógico",
+      "icone": "🧠",
+      "cor": "#8B5CF6",
+      "ordem": 5
+    }
+  ],
+  "flashcards": [
+    {
+      "pergunta": "O que é crase?",
+      "resposta": "Fusão da preposição 'a' com o artigo 'a'",
+      "dica": "Substitua 'à' por 'ao'",
+      "concursoId": "bb_2025",
+      "disciplinaId": "portugues",
+      "dificuldade": 3,
+      "tags": ["gramatica", "crase"]
+    },
+    {
+      "pergunta": "Qual a fórmula de juros simples?",
+      "resposta": "J = C × i × t",
+      "dica": "J = Juros, C = Capital, i = Taxa, t = Tempo",
+      "concursoId": "bb_2025",
+      "disciplinaId": "matematica",
+      "dificuldade": 2,
+      "tags": ["matematica-financeira", "juros"]
+    }
+  ]
+}

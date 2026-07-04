@@ -1,0 +1,28 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "flashcards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "concursoId", "order": "ASCENDING" },
+        { "fieldPath": "disciplinaId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "flashcards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "disciplinaId", "order": "ASCENDING" },
+        { "fieldPath": "dificuldade", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "flashcards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "concursoId", "order": "ASCENDING" },
+        { "fieldPath": "dificuldade", "order": "ASCENDING" }
+      ]
+    }
+  ]
+}
