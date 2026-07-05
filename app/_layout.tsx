@@ -1,6 +1,5 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AuthProvider } from "@/src/contexts/AuthContext";
-import { colors } from "@/src/styles/theme";
 import {
   DarkTheme,
   DefaultTheme,
@@ -30,7 +29,6 @@ export default function RootLayout() {
               animation: "fade",
             }}
           />
-
           {/* Telas principais com Tabs */}
           <Stack.Screen
             name="(tabs)"
@@ -39,8 +37,7 @@ export default function RootLayout() {
               animation: "fade",
             }}
           />
-
-          {/* Telas de Detalhe com header personalizado */}
+          {/* Telas de Detalhe com header personalizado
           <Stack.Screen
             name="concursos/[id]"
             options={{
@@ -55,7 +52,6 @@ export default function RootLayout() {
               },
             }}
           />
-
           <Stack.Screen
             name="disciplinas/[id]"
             options={{
@@ -70,7 +66,6 @@ export default function RootLayout() {
               },
             }}
           />
-
           <Stack.Screen
             name="flashcards/[id]"
             options={{
@@ -85,7 +80,6 @@ export default function RootLayout() {
               },
             }}
           />
-
           <Stack.Screen
             name="flashcards/index"
             options={{
@@ -100,7 +94,6 @@ export default function RootLayout() {
               },
             }}
           />
-
           <Stack.Screen
             name="flashcards/revisao"
             options={{
@@ -115,7 +108,6 @@ export default function RootLayout() {
               },
             }}
           />
-
           <Stack.Screen
             name="modal"
             options={{
@@ -126,7 +118,7 @@ export default function RootLayout() {
               },
               headerTintColor: "#FFFFFF",
             }}
-          />
+          /> */}
         </Stack>
       </AuthProvider>
       <StatusBar style="auto" />

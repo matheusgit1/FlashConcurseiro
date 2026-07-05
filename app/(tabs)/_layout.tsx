@@ -36,12 +36,16 @@ export default function TabsLayout() {
           shadowOpacity: 0.04,
           shadowRadius: 8,
           elevation: 8,
+          justifyContent: "center",
+          alignItems: "center",
         },
         // tabBarShowLabel: true,r
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: "500",
           marginTop: 2,
+          alignItems: "center",
+          justifyContent: "center",
         },
         headerStyle: {
           backgroundColor: colors.white,
@@ -51,51 +55,77 @@ export default function TabsLayout() {
           color: colors.gray[800],
         },
         headerShadowVisible: false,
+        // tabBarHideOnKeyboard: true,
       }}
     >
       <Tabs.Screen
-        name="home"
+        name="home/index"
         options={{
           title: "Início",
           tabBarIcon: ({ color, focused }) => (
             <TabIcon icon="🏠" color={color} focused={focused} />
           ),
+          // tabBarLabel: "Início",
+          tabBarShowLabel: true,
         }}
       />
       <Tabs.Screen
-        name="concursos"
+        name="concursos/index"
         options={{
           title: "Concursos",
           tabBarIcon: ({ color, focused }) => (
             <TabIcon icon="📚" color={color} focused={focused} />
           ),
+          tabBarLabel: "Concursos",
+          // tabBarShowLabel: true,
         }}
       />
       <Tabs.Screen
-        name="flashcards"
+        name="flashcards/index"
         options={{
           title: "Flashcards",
           tabBarIcon: ({ color, focused }) => (
             <TabIcon icon="🃏" color={color} focused={focused} />
           ),
+          tabBarLabel: "Flashcards",
+          tabBarShowLabel: true,
         }}
       />
       <Tabs.Screen
-        name="estatisticas"
+        name="estatisticas/index"
         options={{
           title: "Stats",
           tabBarIcon: ({ color, focused }) => (
             <TabIcon icon="📊" color={color} focused={focused} />
           ),
+          tabBarLabel: "Stats",
+          tabBarShowLabel: true,
         }}
       />
       <Tabs.Screen
-        name="perfil"
+        name="perfil/index"
         options={{
           title: "Perfil",
           tabBarIcon: ({ color, focused }) => (
             <TabIcon icon="👤" color={color} focused={focused} />
           ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="concursos/[id]"
+        options={{
+          title: "Concurso",
+          // href: null, // 👈 Isso oculta a rota da tab bar
+          tabBarButton: () => null, // 👈 Alternativa para ocultar
+        }}
+      />
+      <Tabs.Screen
+        name="disciplinas/[id]"
+        options={{
+          title: "Disciplina",
+          // href: null,
+          tabBarButton: () => null,
         }}
       />
     </Tabs>
