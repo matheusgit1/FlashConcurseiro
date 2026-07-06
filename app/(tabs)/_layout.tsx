@@ -28,7 +28,7 @@ export default function TabsLayout() {
           backgroundColor: colors.white,
           borderTopWidth: 1,
           borderTopColor: colors.gray[100],
-          height: 75,
+          // height: 75,
           paddingBottom: 16,
           paddingTop: 8,
           shadowColor: colors.black,
@@ -62,6 +62,10 @@ export default function TabsLayout() {
         name="home/index"
         options={{
           title: "Início",
+          headerShown: false,
+          // statusBarStyle: "dark",
+          // statusBarAnimation: "fade",
+          // statusBarTranslucent: true,
           tabBarIcon: ({ color, focused }) => (
             <TabIcon icon="🏠" color={color} focused={focused} />
           ),
@@ -111,21 +115,45 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="flashcards/revisao"
+        options={{
+          title: "Revisão",
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon icon="🔁" color={color} focused={focused} />
+          ),
+          // href: null, // 👈 Isso oculta a rota da tab bar
+          // tabBarButton: () => null, // 👈 Alternativa para ocultar
+        }}
+      />
+      <Tabs.Screen
+        name="flashcards/[id]"
+        options={{
+          title: "Flashcard",
+          headerShown: false,
+          href: null,
+          // href: null, // 👈 Isso oculta a rota da tab bar
+          // tabBarButton: () => null, // 👈 Alternativa para ocultar
+        }}
+      />
 
       <Tabs.Screen
         name="concursos/[id]"
         options={{
           title: "Concurso",
+          href: null,
+          headerShown: false,
+          headerStyle: {},
           // href: null, // 👈 Isso oculta a rota da tab bar
-          tabBarButton: () => null, // 👈 Alternativa para ocultar
+          // tabBarButton: () => null, // 👈 Alternativa para ocultar
         }}
       />
       <Tabs.Screen
         name="disciplinas/[id]"
         options={{
           title: "Disciplina",
-          // href: null,
-          tabBarButton: () => null,
+          href: null,
+          // tabBarButton: () => null,
         }}
       />
     </Tabs>

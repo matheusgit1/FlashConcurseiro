@@ -7,6 +7,7 @@ import {
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import {} from "react-native";
 import "react-native-reanimated";
 // import { AuthProvider } from '@/contexts/AuthContext';
 
@@ -19,6 +20,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
       <AuthProvider>
         <Stack>
           {/* Telas de Autenticação */}

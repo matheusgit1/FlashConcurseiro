@@ -1,26 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import { useAuth } from "@/src/contexts/AuthContext";
+import { mockConcursoService } from "@/src/mocks/concursos.mock";
+import { mockDisciplinaService } from "@/src/mocks/disciplinas.mock";
+import { colors, shadows, spacing } from "@/src/styles/theme";
+import { Concurso } from "@/src/types/concurso.types";
+import { DisciplinaCompleta } from "@/src/types/disciplina.types";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
-  StyleSheet,
   RefreshControl,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { Concurso } from '@/src/types/concurso.types';
-import { useAuth } from '@/src/contexts/AuthContext';
-import { DisciplinaCompleta } from '@/src/types/disciplina.types';
-import { mockConcursoService } from '@/src/mocks/concursos.mock';
-import { mockDisciplinaService } from '@/src/mocks/disciplinas.mock';
-import { colors, shadows, spacing } from '@/src/styles/theme';
-// import { useAuth } from '@/contexts/AuthContext';
-// import { mockConcursoService } from '@/mocks/concursos.mock';
-// import { mockDisciplinaService } from '@/mocks/disciplinas.mock';
-// import { Concurso } from '@/types/concurso.types';
-// import { DisciplinaCompleta } from '@/types/disciplina.types';
-// import { colors, spacing, shadows } from '@/styles/theme';
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -39,7 +33,7 @@ export default function HomeScreen() {
       setConcursos(concursosData);
       setDisciplinas(disciplinasData);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error("Erro ao carregar dados:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -77,7 +71,7 @@ export default function HomeScreen() {
           <Text style={styles.subGreeting}>Vamos estudar hoje?</Text>
         </View>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{user?.avatar || '👤'}</Text>
+          <Text style={styles.avatarText}>{user?.avatar || "👤"}</Text>
         </View>
       </View>
 
@@ -88,7 +82,9 @@ export default function HomeScreen() {
           <Text style={styles.statLabel}>Concursos</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={[styles.statNumber, { color: colors.green[500] }]}>0</Text>
+          <Text style={[styles.statNumber, { color: colors.green[500] }]}>
+            0
+          </Text>
           <Text style={styles.statLabel}>Em andamento</Text>
         </View>
         <View style={styles.statCard}>
@@ -123,7 +119,7 @@ export default function HomeScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Concursos</Text>
-          <TouchableOpacity onPress={() => router.push('/concursos')}>
+          <TouchableOpacity onPress={() => router.push("/concursos")}>
             <Text style={styles.seeAll}>Ver todos</Text>
           </TouchableOpacity>
         </View>
@@ -161,20 +157,20 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: colors.white,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingTop: spacing.xl,
     paddingBottom: spacing.lg,
   },
   greeting: {
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.gray[800],
   },
   subGreeting: {
@@ -187,29 +183,29 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: colors.primary[100],
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarText: {
     fontSize: 24,
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing['2xl'],
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: spacing["2xl"],
   },
   statCard: {
     flex: 1,
     backgroundColor: colors.white,
     padding: spacing.lg,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginHorizontal: spacing.xs,
     ...shadows.sm,
   },
   statNumber: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.primary[500],
   },
   statLabel: {
@@ -218,29 +214,29 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   section: {
-    marginBottom: spacing['2xl'],
+    marginBottom: spacing["2xl"],
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.gray[800],
   },
   seeAll: {
     fontSize: 14,
     color: colors.primary[500],
-    fontWeight: '500',
+    fontWeight: "500",
   },
   disciplinaCard: {
     backgroundColor: colors.white,
     padding: spacing.md,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginRight: spacing.md,
     minWidth: 80,
     ...shadows.sm,
@@ -251,9 +247,9 @@ const styles = StyleSheet.create({
   },
   disciplinaNome: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
     color: colors.gray[700],
-    textAlign: 'center',
+    textAlign: "center",
   },
   disciplinaCount: {
     fontSize: 11,
@@ -269,7 +265,7 @@ const styles = StyleSheet.create({
   },
   concursoNome: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.gray[800],
   },
   concursoInstituicao: {
@@ -278,8 +274,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   concursoFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
@@ -292,6 +288,6 @@ const styles = StyleSheet.create({
   concursoFlashcards: {
     fontSize: 12,
     color: colors.primary[500],
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });

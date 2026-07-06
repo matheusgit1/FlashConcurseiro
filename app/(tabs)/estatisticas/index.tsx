@@ -333,7 +333,7 @@ export default function EstatisticasScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[500],
+    backgroundColor: colors.white,
     paddingHorizontal: spacing.lg,
   },
   loadingContainer: {

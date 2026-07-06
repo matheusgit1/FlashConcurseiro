@@ -1,10 +1,3 @@
-// import { mockConcursoService } from "@/mocks/concursos.mock";
-// import { mockDisciplinaService } from "@/mocks/disciplinas.mock";
-// import { mockFlashcardService } from "@/mocks/flashcards.mock";
-// import { colors, shadows, spacing } from "@/styles/theme";
-// import { Concurso } from "@/types/concurso.types";
-// import { Disciplina } from "@/types/disciplina.types";
-// import { FlashcardReview } from "@/types/flashcard.types";
 import { mockConcursoService } from "@/src/mocks/concursos.mock";
 import { mockDisciplinaService } from "@/src/mocks/disciplinas.mock";
 import { mockFlashcardService } from "@/src/mocks/flashcards.mock";
@@ -18,7 +11,6 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -32,6 +24,8 @@ export default function FlashcardsScreen() {
     concurso?: string;
     disciplina?: string;
   }>();
+
+  console.log("Params recebidos:", params);
 
   const [flashcards, setFlashcards] = useState<FlashcardReview[]>([]);
   const [filteredFlashcards, setFilteredFlashcards] = useState<
@@ -114,7 +108,7 @@ export default function FlashcardsScreen() {
       );
     }
 
-    setFilteredFlashcards(filtered);
+    setFilteredFlashcards(() => filtered);
   };
 
   useEffect(() => {
@@ -126,7 +120,7 @@ export default function FlashcardsScreen() {
   }, [searchTerm, selectedConcurso, selectedDisciplina, filterDificuldade]);
 
   const onRefresh = () => {
-    setRefreshing(true);
+    setRefreshing(() => true);
     loadData();
   };
 
@@ -140,7 +134,9 @@ export default function FlashcardsScreen() {
     return labels[status] || status;
   };
 
-  const getStatusColor = (status: string): string => {
+  const getStatusColor = (
+    status: "new" | "learning" | "review" | "mastered",
+  ): string => {
     const colors: Record<string, string> = {
       new: "#9CA3AF",
       learning: "#F59E0B",
@@ -198,7 +194,7 @@ export default function FlashcardsScreen() {
       </View>
 
       {/* Filtros */}
-      <ScrollView
+      {/* <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.filtersContainer}
@@ -279,9 +275,9 @@ export default function FlashcardsScreen() {
                 getDisciplinaNome(selectedDisciplina).substring(0, 12)
               : "📖 Disciplina"}
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
-        <TouchableOpacity
+      {/* <TouchableOpacity
           style={[
             styles.filterChip,
             // filterDificuldade && styles.filterChipActive,
@@ -302,8 +298,8 @@ export default function FlashcardsScreen() {
           >
             {filterDificuldade ? `⭐ ${filterDificuldade}` : "⭐ Dificuldade"}
           </Text>
-        </TouchableOpacity>
-      </ScrollView>
+        </TouchableOpacity> */}
+      {/* </ScrollView> */}
 
       {/* Estatísticas */}
       <View style={styles.statsContainer}>
@@ -336,7 +332,7 @@ export default function FlashcardsScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
-            onPress={() => router.push(`/flashcards/${item.id}`)}
+            onPress={() => router.push(`/flashcards/${item.id}`, {})}
           >
             <View style={styles.cardHeader}>
               <View style={styles.cardBadges}>
@@ -419,6 +415,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: 20,
+    height: 32,
     backgroundColor: colors.gray[100],
     marginRight: spacing.sm,
   },
