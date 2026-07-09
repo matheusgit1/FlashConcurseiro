@@ -13,13 +13,13 @@ const envs = {
 };
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDsLO2q0R3qwMmlT359kGcd48guiUywLyc",
-  authDomain: "flash-cards-95ee8.firebaseapp.com",
-  projectId: "flash-cards-95ee8",
-  storageBucket: "flash-cards-95ee8.firebasestorage.app",
-  messagingSenderId: "800453227858",
-  appId: "1:800453227858:web:a15151cc08d9f0f45bb68b",
-  measurementId: "G-LL9N6WTVMF",
+  apiKey: envs.API_KEY,
+  authDomain: envs.AUTH_DOMAIN,
+  projectId: envs.PROJECT_ID,
+  storageBucket: envs.STORAGE_BUCKET,
+  messagingSenderId: envs.MESSAGING_SENDER_ID,
+  appId: envs.APP_ID,
+  measurementId: envs.MEASUREMENT_ID,
 };
 
 export const app = initializeApp(firebaseConfig);
