@@ -12,8 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// import { useAuth } from '@/contexts/AuthContext';
-// import { colors, spacing, typography } from '@/styles/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -87,9 +85,9 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push("/registro")}>
+          {/* <TouchableOpacity onPress={() => router.push("/registro")}>
             <Text style={styles.registerLink}>Não tem conta? Cadastre-se</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <Text style={styles.mockHint}>

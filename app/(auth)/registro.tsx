@@ -1,3 +1,4 @@
+import { useAuth } from "@/src/contexts/AuthContext";
 import { colors, spacing } from "@/src/styles/theme";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -17,6 +18,7 @@ import {
 
 export default function RegistroScreen() {
   const router = useRouter();
+  const { loginWithGoogle } = useAuth();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -75,17 +77,18 @@ export default function RegistroScreen() {
   };
 
   const handleGoogleLogin = async () => {
-    setLoading(true);
+    // setLoading(true);
     try {
       // 🔥 Mock do Google - será substituído pelo Firebase
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await loginWithGoogle();
+      // await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      Alert.alert("✅ Google", "Login com Google realizado com sucesso!", [
-        {
-          text: "OK",
-          onPress: () => router.replace("/(tabs)/home"),
-        },
-      ]);
+      // Alert.alert("✅ Google", "Login com Google realizado com sucesso!", [
+      //   {
+      //     text: "OK",
+      //     onPress: () => router.replace("/(tabs)/home"),
+      //   },
+      // ]);
     } catch (error: any) {
       Alert.alert("Erro", error.message || "Falha no login com Google");
     } finally {
