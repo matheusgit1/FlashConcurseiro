@@ -1,15 +1,31 @@
+import Constants from "expo-constants";
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+const extra = (Constants.expoConfig && Constants.expoConfig.extra) || {};
 
 const envs = {
-  API_KEY: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  AUTH_DOMAIN: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  PROJECT_ID: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  STORAGE_BUCKET: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  MESSAGING_SENDER_ID: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  APP_ID: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-  MEASUREMENT_ID: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  API_KEY:
+    process.env.EXPO_PUBLIC_FIREBASE_API_KEY ||
+    extra.EXPO_PUBLIC_FIREBASE_API_KEY,
+  AUTH_DOMAIN:
+    process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ||
+    extra.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  PROJECT_ID:
+    process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ||
+    extra.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  STORAGE_BUCKET:
+    process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+    extra.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  MESSAGING_SENDER_ID:
+    process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ||
+    extra.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  APP_ID:
+    process.env.EXPO_PUBLIC_FIREBASE_APP_ID ||
+    extra.EXPO_PUBLIC_FIREBASE_APP_ID,
+  MEASUREMENT_ID:
+    process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID ||
+    extra.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 const firebaseConfig = {
