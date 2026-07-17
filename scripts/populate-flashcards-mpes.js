@@ -8,8 +8,6 @@ import { addDoc, collection, getFirestore } from "firebase/firestore";
 const envPath = path.resolve(process.cwd(), "..", ".env");
 dotenv.config({ path: envPath });
 
-console.log("env path:", envPath);
-
 const firebaseEnv = {
   apiKey:
     process.env.EXPO_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY,

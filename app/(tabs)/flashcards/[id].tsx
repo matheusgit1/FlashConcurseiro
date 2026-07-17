@@ -1,18 +1,14 @@
-// import { mockConcursoService } from "@/mocks/concursos.mock";
-// import { mockDisciplinaService } from "@/mocks/disciplinas.mock";
-// import { mockFlashcardService } from "@/mocks/flashcards.mock";
-// import { colors, shadows, spacing } from "@/styles/theme";
-// import { Concurso } from "@/types/concurso.types";
-// import { Disciplina } from "@/types/disciplina.types";
-// import { FlashcardReview } from "@/types/flashcard.types";
-import { mockConcursoService } from "@/src/mocks/concursos.mock";
-import { mockDisciplinaService } from "@/src/mocks/disciplinas.mock";
-import { mockFlashcardService } from "@/src/mocks/flashcards.mock";
+import {
+  concursoCollection,
+  disciplinaCollection,
+  flashcardCollection,
+} from "@/src/services/firebase";
 import { colors, shadows, spacing } from "@/src/styles/theme";
 import { Concurso } from "@/src/types/concurso.types";
 import { Disciplina } from "@/src/types/disciplina.types";
 import { FlashcardReview } from "@/src/types/flashcard.types";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -26,10 +22,7 @@ import {
 } from "react-native";
 
 export default function FlashcardDetailScreen() {
-  const { id } = useLocalSearchParams<{
-    id: string;
-    // flashcardData: Flashcard;
-  }>();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [flashcard, setFlashcard] = useState<FlashcardReview | null>(null);
   const [concurso, setConcurso] = useState<Concurso | null>(null);
@@ -37,32 +30,70 @@ export default function FlashcardDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [mostrarResposta, setMostrarResposta] = useState(false);
   const [nivelDominio, setNivelDominio] = useState<0 | 1 | 2 | 3 | 4 | 5>(0);
+  const [allFlashcards, setAllFlashcards] = useState<FlashcardReview[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  // router.setParams({
-  //   title: "Flashcard - Revisão",
-  // });
 
-  useEffect(() => {
+ useEffect(() => {
     const loadData = async () => {
       if (!id) return;
 
       try {
-        const flashcardData = await mockFlashcardService.getById(id);
-        if (!flashcardData) {
+        // 🔥 Busca o flashcard específico do Firestore
+        const flashcardDoc = await getDoc(
+          doc(flashcardCollection, id as string)
+        );
+
+        if (!flashcardDoc.exists()) {
           Alert.alert("Erro", "Flashcard não encontrado");
           router.back();
           return;
         }
 
-        const [concursoData, disciplinaData] = await Promise.all([
-          mockConcursoService.getById(flashcardData.concursoId),
-          mockDisciplinaService.getById(flashcardData.disciplinaId),
+        const flashcardData = {
+          id: flashcardDoc.id,
+          ...flashcardDoc.data(),
+        } as FlashcardReview;
+
+        // 🔥 Busca concurso e disciplina
+        const [concursoDoc, disciplinaDoc] = await Promise.all([
+          getDoc(doc(concursoCollection, flashcardData.concursoId)),
+          getDoc(doc(disciplinaCollection, flashcardData.disciplinaId)),
         ]);
 
-        setFlashcard(flashcardData as FlashcardReview);
-        setConcurso(concursoData);
-        setDisciplina(disciplinaData);
-        setNivelDominio((flashcardData as FlashcardReview).nivelDominio || 0);
+        // 🔥 Busca todos os flashcards da mesma disciplina para navegação
+        const allFlashcardsSnapshot = await getDocs(
+          query(
+            flashcardCollection,
+            where("disciplinaId", "==", flashcardData.disciplinaId),
+            where("active", "==", true)
+          )
+        );
+
+        const flashcardsList: FlashcardReview[] = [];
+        allFlashcardsSnapshot.forEach((doc) => {
+          flashcardsList.push({
+            id: doc.id,
+            ...doc.data(),
+          } as FlashcardReview);
+        });
+
+        // Encontra o índice do flashcard atual
+        const index = flashcardsList.findIndex((f) => f.id === id);
+
+        setFlashcard(flashcardData);
+        setConcurso(concursoDoc.exists() ? ({ id: concursoDoc.id, ...concursoDoc.data() } as Concurso) : null);
+        setDisciplina(disciplinaDoc.exists() ? ({ id: disciplinaDoc.id, ...disciplinaDoc.data() } as Disciplina) : null);
+        setNivelDominio(flashcardData.nivelDominio || 0);
+        setAllFlashcards(flashcardsList);
+        setCurrentIndex(index !== -1 ? index : 0);
+
+        // 🔥 Atualiza o título da tela
+        // navigation.setOptions({
+        //   title: flashcardData.pergunta.length > 25 
+        //     ? flashcardData.pergunta.substring(0, 25) + '...' 
+        //     : flashcardData.pergunta,
+        // });
       } catch (error) {
         console.error("Erro ao carregar flashcard:", error);
         Alert.alert("Erro", "Falha ao carregar o flashcard");
@@ -73,6 +104,27 @@ export default function FlashcardDetailScreen() {
 
     loadData();
   }, [id]);
+
+  const handleProximo = () => {
+    if (currentIndex < allFlashcards.length - 1) {
+      const nextIndex = currentIndex + 1;
+      const nextFlashcard = allFlashcards[nextIndex];
+      router.push(`/flashcards/${nextFlashcard.id}`);
+    } else {
+      Alert.alert("🎉", "Você revisou todos os flashcards desta disciplina!");
+    }
+  };
+
+  const handleAnterior = () => {
+    if (currentIndex > 0) {
+      const prevIndex = currentIndex - 1;
+      const prevFlashcard = allFlashcards[prevIndex];
+      router.push(`/flashcards/${prevFlashcard.id}`);
+    } else {
+      Alert.alert("ℹ️", "Este é o primeiro flashcard");
+    }
+  };
+
 
   const handleShare = async () => {
     if (!flashcard) return;
@@ -86,14 +138,26 @@ export default function FlashcardDetailScreen() {
     }
   };
 
+  
+
   const handleNivelDominio = (nivel: 0 | 1 | 2 | 3 | 4 | 5) => {
     setNivelDominio(nivel);
     Alert.alert(
       "Progresso Atualizado",
       `Nível de domínio: ${getNivelLabel(nivel)}`,
-      [{ text: "OK" }],
+      [{ text: "OK" }]
     );
-    // Aqui você pode salvar no Firebase/backend
+    // 🔥 Salva no Firestore
+    try {
+      // Atualiza o documento do flashcard com o novo nível de domínio
+      updateDoc(doc(flashcardCollection, flashcard!.id), {
+        nivelDominio: nivel,
+        updatedAt: new Date().toISOString(),
+      });
+      console.log("📊 Nível de domínio atualizado:", nivel);
+    } catch (error) {
+      console.error("Erro ao salvar progresso:", error);
+    }
   };
 
   const getNivelLabel = (nivel: number): string => {
@@ -150,6 +214,23 @@ export default function FlashcardDetailScreen() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Progresso na disciplina */}
+      {allFlashcards.length > 0 && (
+        <View style={styles.progressContainer}>
+          <Text style={styles.progressText}>
+            {currentIndex + 1} / {allFlashcards.length}
+          </Text>
+          <View style={styles.progressBar}>
+            <View
+              style={[
+                styles.progressBarFill,
+                { width: `${((currentIndex + 1) / allFlashcards.length) * 100}%` },
+              ]}
+            />
+          </View>
+        </View>
+      )}
+
       {/* Cabeçalho */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
@@ -177,8 +258,12 @@ export default function FlashcardDetailScreen() {
           <Text style={styles.metaText}>
             📖 {disciplina?.nome || "Disciplina"}
           </Text>
-          <Text style={styles.metaText}>📋 {concurso?.nome || "Concurso"}</Text>
-          <Text style={styles.metaText}>🔄 {flashcard.revisoes} revisões</Text>
+          <Text style={styles.metaText}>
+            📋 {concurso?.nome || "Concurso"}
+          </Text>
+          <Text style={styles.metaText}>
+            🔄 {flashcard.revisoes || 0} revisões
+          </Text>
         </View>
       </View>
 
@@ -252,10 +337,25 @@ export default function FlashcardDetailScreen() {
       {/* Ações */}
       <View style={styles.actionsContainer}>
         <TouchableOpacity
+          style={[styles.actionButton, styles.actionButtonSecondary]}
+          onPress={handleAnterior}
+        >
+          <Text style={[styles.actionButtonText, { color: colors.primary[500] }]}>
+            ⬅️ Anterior
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.actionButton, styles.actionButtonPrimary]}
           onPress={() => {
             setMostrarResposta(false);
             Alert.alert("✅ Revisão", "Flashcard marcado como revisado!");
+            // 🔥 Incrementa o contador de revisões
+            // updateDoc(doc(flashcardCollection, flashcard.id), {
+            //   revisoes: (flashcard.revisoes || 0) + 1,
+            //   ultimaRevisao: new Date().toISOString(),
+            //   updatedAt: new Date().toISOString(),
+            // });
           }}
         >
           <Text style={styles.actionButtonText}>✅ Revisar</Text>
@@ -263,23 +363,10 @@ export default function FlashcardDetailScreen() {
 
         <TouchableOpacity
           style={[styles.actionButton, styles.actionButtonSecondary]}
-          onPress={() => router.push("/flashcards")}
+          onPress={handleProximo}
         >
-          <Text
-            style={[styles.actionButtonText, { color: colors.primary[500] }]}
-          >
-            📚 Voltar
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, styles.actionButtonSecondary]}
-          onPress={() => router.push("/flashcards")}
-        >
-          <Text
-            style={[styles.actionButtonText, { color: colors.primary[500] }]}
-          >
-            🔄 Próximo
+          <Text style={[styles.actionButtonText, { color: colors.primary[500] }]}>
+            Próximo ➡️
           </Text>
         </TouchableOpacity>
       </View>
@@ -546,5 +633,26 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 13,
     color: colors.primary[600],
+  },
+  progressContainer: {
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  progressText: {
+    fontSize: 14,
+    color: colors.gray[500],
+    marginBottom: spacing.xs,
+    textAlign: "center",
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: colors.gray[200],
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: colors.primary[500],
+    borderRadius: 2,
   },
 });

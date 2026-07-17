@@ -17,9 +17,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// import { mockConcursoService } from '@/mocks/concursos.mock';
-// import { Concurso } from '@/types/concurso.types';
-// import { colors, spacing, shadows } from '@/styles/theme';
 
 export default function ConcursosListScreen() {
   const router = useRouter();

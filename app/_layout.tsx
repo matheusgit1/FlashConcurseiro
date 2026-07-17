@@ -7,9 +7,8 @@ import {
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import {} from "react-native";
+import { } from "react-native";
 import "react-native-reanimated";
-// import { AuthProvider } from '@/contexts/AuthContext';
 
 export const unstable_settings = {
   initialRouteName: "(auth)",
