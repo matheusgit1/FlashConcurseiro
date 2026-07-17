@@ -1,10 +1,14 @@
 import { useAuth } from "@/src/contexts/AuthContext";
-import { mockConcursoService } from "@/src/mocks/concursos.mock";
-import { mockDisciplinaService } from "@/src/mocks/disciplinas.mock";
+import {
+  concursoCollection,
+  disciplinaCollection,
+  flashcardCollection,
+} from "@/src/services/firebase";
 import { colors, shadows, spacing } from "@/src/styles/theme";
 import { Concurso } from "@/src/types/concurso.types";
 import { DisciplinaCompleta } from "@/src/types/disciplina.types";
 import { useRouter } from "expo-router";
+import { getDocs, orderBy, query, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -23,20 +27,80 @@ export default function HomeScreen() {
   const [disciplinas, setDisciplinas] = useState<DisciplinaCompleta[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [estatisticas, setEstatisticas] = useState<{
+    totalFlashcards: number;
+    dominados: number;
+    emAndamento: number;
+  }>({
+    totalFlashcards: 0,
+    dominados: 0,
+    emAndamento: 0,
+  });
 
   const loadData = async () => {
     try {
-      const [concursosData, disciplinasData] = await Promise.all([
-        mockConcursoService.getAll(),
-        mockDisciplinaService.getCompletas(),
-      ]);
-      setConcursos(concursosData);
-      setDisciplinas(disciplinasData);
+      // 🔥 Busca dados do Firestore
+      const [concursosSnapshot, disciplinasSnapshot, flashcardsSnapshot] =
+        await Promise.all([
+          getDocs(query(concursoCollection, where("active", "==", true))),
+          getDocs(
+            query(
+              disciplinaCollection,
+              where("active", "==", true),
+              orderBy("ordem", "asc"),
+            ),
+          ),
+          getDocs(flashcardCollection),
+        ]);
+
+      // Mapeia concursos
+      const concursosData: Concurso[] = [];
+      concursosSnapshot.forEach((doc) => {
+        concursosData.push({
+          id: doc.id,
+          ...doc.data(),
+        } as Concurso);
+      });
+
+      // Mapeia disciplinas
+      const disciplinasData: DisciplinaCompleta[] = [];
+      disciplinasSnapshot.forEach((doc) => {
+        const data = doc.data();
+        // Conta flashcards por disciplina
+        const total = flashcardsSnapshot.docs.filter(
+          (f) => f.data().disciplinaId === doc.id,
+        ).length;
+
+        disciplinasData.push({
+          id: doc.id,
+          nome: data.nome,
+          icone: data.icone,
+          cor: data.cor,
+          descricao: data.descricao,
+          ordem: data.ordem,
+          totalFlashcards: total,
+          progresso: 0, // Será calculado com base no progresso do usuário
+        });
+      });
+
+      // Calcula estatísticas gerais
+      const totalFlashcards = flashcardsSnapshot.size;
+      const dominados = flashcardsSnapshot.docs.filter(
+        (f) => f.data().nivelDominio && f.data().nivelDominio >= 4,
+      ).length;
+
+      setConcursos(() => concursosData);
+      setDisciplinas(() => disciplinasData);
+      setEstatisticas(() => ({
+        totalFlashcards,
+        dominados,
+        emAndamento: totalFlashcards - dominados,
+      }));
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setLoading(() => false);
+      setRefreshing(() => false);
     }
   };
 
@@ -45,7 +109,7 @@ export default function HomeScreen() {
   }, []);
 
   const onRefresh = () => {
-    setRefreshing(true);
+    setRefreshing(() => true);
     loadData();
   };
 

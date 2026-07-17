@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { collection, getFirestore } from "firebase/firestore";
 const extra = (Constants.expoConfig && Constants.expoConfig.extra) || {};
 
 const envs = {
@@ -41,3 +41,8 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const firestoreInstance = getFirestore(app);
+
+export const concursoCollection = collection(firestoreInstance, "concursos");
+export const disciplinaCollection = collection(firestoreInstance, "disciplinas")
+export const flashcardCollection = collection(firestoreInstance, "flashcards");
