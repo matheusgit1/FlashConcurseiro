@@ -32,10 +32,9 @@ export default function ConcursoDetailScreen() {
       if (!id) return;
 
       try {
-        // 🔥 Busca dados do Firestore em paralelo
         const [concursoSnapshot, disciplinasSnapshot, flashcardsSnapshot] =
           await Promise.all([
-            // Busca o concurso específico
+     
             getDocs(
               query(
                 concursoCollection,
@@ -43,7 +42,7 @@ export default function ConcursoDetailScreen() {
                 where("active", "==", true),
               ),
             ),
-            // Busca todas as disciplinas ativas
+
             getDocs(
               query(
                 disciplinaCollection,
@@ -51,7 +50,7 @@ export default function ConcursoDetailScreen() {
                 orderBy("ordem", "asc"),
               ),
             ),
-            // Busca todos os flashcards
+       
             getDocs(
               query(flashcardCollection, where("concursoId", "==", id.trim())),
             ),
@@ -70,7 +69,7 @@ export default function ConcursoDetailScreen() {
           flashcardsSnapshot.docs.map((doc) => doc.data()),
         );
 
-        // 🔥 Processa concurso
+      
         let concursoData: Concurso = {
           id: "",
           nome: "",
@@ -104,7 +103,7 @@ export default function ConcursoDetailScreen() {
           return;
         }
 
-        // 🔥 Processa disciplinas do concurso
+     
         const disciplinasData: Disciplina[] = [];
         const disciplinasIds = concursoData.disciplinas || [];
 
@@ -123,10 +122,9 @@ export default function ConcursoDetailScreen() {
           }
         });
 
-        // 🔥 Ordena disciplinas pela ordem
+ 
         disciplinasData.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
 
-        // 🔥 Conta flashcards do concurso
         let total = 0;
         flashcardsSnapshot.forEach((doc) => {
           const data = doc.data();

@@ -30,7 +30,6 @@ export default function EstatisticasScreen() {
 
   const loadData = async () => {
     try {
-      // 🔥 Busca dados do Firestore
       const [flashcardsSnapshot, concursosSnapshot, disciplinasSnapshot] =
         await Promise.all([
           getDocs(
@@ -48,7 +47,6 @@ export default function EstatisticasScreen() {
           ),
         ]);
 
-      // 🔥 Processa flashcards
       const flashcardsData: FlashcardReview[] = [];
       flashcardsSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -75,7 +73,6 @@ export default function EstatisticasScreen() {
         } as FlashcardReview);
       });
 
-      // 🔥 Processa concursos
       const concursosData: Concurso[] = [];
       concursosSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -94,7 +91,6 @@ export default function EstatisticasScreen() {
         } as Concurso);
       });
 
-      // 🔥 Processa disciplinas
       const disciplinasData: Disciplina[] = [];
       disciplinasSnapshot.forEach((doc) => {
         const data = doc.data();

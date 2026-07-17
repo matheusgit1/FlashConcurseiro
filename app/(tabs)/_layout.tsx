@@ -1,4 +1,4 @@
-// import { colors } from "@/styles/theme";
+
 import { colors } from "@/src/styles/theme";
 import { Tabs } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
@@ -122,8 +122,6 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (
             <TabIcon icon="🔁" color={color} focused={focused} />
           ),
-          // href: null, // 👈 Isso oculta a rota da tab bar
-          // tabBarButton: () => null, // 👈 Alternativa para ocultar
         }}
       />
       <Tabs.Screen
@@ -132,8 +130,6 @@ export default function TabsLayout() {
           title: "Flashcard",
           headerShown: false,
           href: null,
-          // href: null, // 👈 Isso oculta a rota da tab bar
-          // tabBarButton: () => null, // 👈 Alternativa para ocultar
         }}
       />
 
@@ -144,8 +140,6 @@ export default function TabsLayout() {
           href: null,
           headerShown: false,
           headerStyle: {},
-          // href: null, // 👈 Isso oculta a rota da tab bar
-          // tabBarButton: () => null, // 👈 Alternativa para ocultar
         }}
       />
       <Tabs.Screen
@@ -153,7 +147,6 @@ export default function TabsLayout() {
         options={{
           title: "Disciplina",
           href: null,
-          // tabBarButton: () => null,
         }}
       />
     </Tabs>

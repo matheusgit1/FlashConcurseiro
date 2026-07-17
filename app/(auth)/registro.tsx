@@ -55,10 +55,8 @@ export default function RegistroScreen() {
 
     setLoading(true);
     try {
-      // 🔥 Mock do registro - será substituído pelo Firebase
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Simula sucesso
       Alert.alert(
         "✅ Conta criada!",
         `Bem-vindo(a) ${nome}! Sua conta foi criada com sucesso.`,
@@ -77,9 +75,7 @@ export default function RegistroScreen() {
   };
 
   const handleGoogleLogin = async () => {
-    // setLoading(true);
     try {
-      // 🔥 Mock do Google - será substituído pelo Firebase
       await loginWithGoogle();
       // await new Promise((resolve) => setTimeout(resolve, 1500));
 

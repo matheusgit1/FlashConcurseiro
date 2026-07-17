@@ -15,7 +15,6 @@ import {
 
 export default function LoginScreen() {
   const router = useRouter();
-  // console.log("LoginScreen rendered");
   const { login, isLoading } = useAuth();
   const [email, setEmail] = useState("joao@email.com");
   const [senha, setSenha] = useState("123456");

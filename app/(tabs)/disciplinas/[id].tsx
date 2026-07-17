@@ -33,7 +33,6 @@ export default function DisciplinaDetailScreen() {
     if (!id) return;
 
     try {
-      // 🔥 Busca dados do Firestore
       const [disciplinaSnapshot, flashcardsSnapshot, concursosSnapshot] =
         await Promise.all([
           // Busca a disciplina específica
@@ -56,7 +55,6 @@ export default function DisciplinaDetailScreen() {
           getDocs(query(concursoCollection, where("active", "==", true))),
         ]);
 
-      // 🔥 Processa disciplina
       let disciplinaData: DisciplinaCompleta = {
         totalFlashcards: 0,
         progresso: 0,
@@ -87,7 +85,6 @@ export default function DisciplinaDetailScreen() {
         return;
       }
 
-      // 🔥 Processa flashcards
       const flashcardsData: FlashcardReview[] = [];
       flashcardsSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -114,7 +111,6 @@ export default function DisciplinaDetailScreen() {
         } as FlashcardReview);
       });
 
-      // 🔥 Processa concursos
       const concursosData: Concurso[] = [];
       concursosSnapshot.forEach((doc) => {
         const data = doc.data();
