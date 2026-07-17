@@ -39,7 +39,7 @@ if (!firebaseEnv.apiKey || !firebaseEnv.projectId) {
   );
 }
 
-// 🔥 Configuração do Firebase
+
 const firebaseConfig = {
   apiKey: firebaseEnv.apiKey || "SEU_API_KEY",
   authDomain: firebaseEnv.authDomain || "SEU_PROJETO.firebaseapp.com",

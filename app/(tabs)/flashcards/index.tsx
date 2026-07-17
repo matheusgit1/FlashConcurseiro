@@ -47,7 +47,7 @@ export default function FlashcardsScreen() {
 
   const loadData = async () => {
     try {
-      // 🔥 Busca dados do Firestore
+
       const [flashcardsSnapshot, concursosSnapshot, disciplinasSnapshot] =
         await Promise.all([
           getDocs(
@@ -65,7 +65,8 @@ export default function FlashcardsScreen() {
           ),
         ]);
 
-      // 🔥 Processa flashcards
+        console.log("flashcardsSnapshot:\tflashcardsSnapshot\nconcursosSnapshot:\tconcursosSnapshot\ndisciplinasSnapshot:\tdisciplinasSnapshot", flashcardsSnapshot, concursosSnapshot, disciplinasSnapshot)
+
       const flashcardsData: FlashcardReview[] = [];
       flashcardsSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -92,7 +93,6 @@ export default function FlashcardsScreen() {
         } as FlashcardReview);
       });
 
-      // 🔥 Processa concursos
       const concursosData: Concurso[] = [];
       concursosSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -111,7 +111,7 @@ export default function FlashcardsScreen() {
         } as Concurso);
       });
 
-      // 🔥 Processa disciplinas
+
       const disciplinasData: Disciplina[] = [];
       disciplinasSnapshot.forEach((doc) => {
         const data = doc.data();

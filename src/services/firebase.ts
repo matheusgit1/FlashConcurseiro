@@ -40,9 +40,11 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
 export const db = getFirestore(app);
 export const firestoreInstance = getFirestore(app);
 
 export const concursoCollection = collection(firestoreInstance, "concursos");
 export const disciplinaCollection = collection(firestoreInstance, "disciplinas")
 export const flashcardCollection = collection(firestoreInstance, "flashcards");
+export const usersCollection = collection(firestoreInstance, "users");

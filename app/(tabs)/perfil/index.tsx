@@ -1,7 +1,9 @@
 import { useAuth } from '@/src/contexts/AuthContext';
+import { usersCollection } from '@/src/services/firebase';
 import { colors, shadows, spacing } from '@/src/styles/theme';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -23,6 +25,43 @@ export default function PerfilScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [novoNome, setNovoNome] = useState(user?.nome || '');
   const [editando, setEditando] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [estatisticas, setEstatisticas] = useState({
+    totalFlashcards: 0,
+    dominados: 0,
+    diasEstudo: 0,
+  });
+
+  const loadUserData = async () => {
+    if (!user?.uid) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+
+      const userDoc = await getDoc(doc(usersCollection, user.uid));
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setNotificacoes(userData.notificacoes ?? true);
+        setTemaEscuro(userData.temaEscuro ?? false);
+        setEstatisticas({
+          totalFlashcards: userData.totalFlashcards || 0,
+          dominados: userData.dominados || 0,
+          diasEstudo: userData.diasEstudo || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados do usuário:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUserData();
+  }, [user?.uid]);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -42,15 +81,60 @@ export default function PerfilScreen() {
     );
   };
 
-  const handleSalvarNome = () => {
+  const handleSalvarNome = async () => {
     if (novoNome.trim().length < 3) {
       Alert.alert('Erro', 'O nome deve ter pelo menos 3 caracteres');
       return;
     }
-    // Aqui você pode salvar no Firebase/backend
-    Alert.alert('Sucesso', 'Nome atualizado com sucesso!');
-    setEditando(false);
-    setModalVisible(false);
+    
+    try {
+      if (!user?.uid) return;
+      
+      const userRef = doc(usersCollection, user.uid);
+      await updateDoc(userRef, {
+        nome: novoNome.trim(),
+        updatedAt: new Date().toISOString(),
+      });
+      
+      Alert.alert('Sucesso', 'Nome atualizado com sucesso!');
+      setEditando(false);
+      setModalVisible(false);
+    } catch (error) {
+      console.error('Erro ao atualizar nome:', error);
+      Alert.alert('Erro', 'Falha ao atualizar nome');
+    }
+  };
+
+  const handleToggleNotificacoes = async () => {
+    const newValue = !notificacoes;
+    setNotificacoes(newValue);
+    
+    try {
+      if (!user?.uid) return;
+      const userRef = doc(usersCollection, user.uid);
+      await updateDoc(userRef, {
+        notificacoes: newValue,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar notificações:', error);
+    }
+  };
+
+  const handleToggleTemaEscuro = async () => {
+    const newValue = !temaEscuro;
+    setTemaEscuro(newValue);
+    
+    try {
+      if (!user?.uid) return;
+      const userRef = doc(usersCollection, user.uid);
+      await updateDoc(userRef, {
+        temaEscuro: newValue,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar tema:', error);
+    }
   };
 
   const menuItems = [
@@ -70,11 +154,11 @@ export default function PerfilScreen() {
       icon: '🔔',
       title: 'Notificações',
       description: 'Receba lembretes de estudo',
-      onPress: () => setNotificacoes(!notificacoes),
+      onPress: handleToggleNotificacoes,
       rightElement: (
         <Switch
           value={notificacoes}
-          onValueChange={setNotificacoes}
+          onValueChange={handleToggleNotificacoes}
           trackColor={{ false: colors.gray[300], true: colors.primary[500] }}
         />
       ),
@@ -83,11 +167,11 @@ export default function PerfilScreen() {
       icon: '🌙',
       title: 'Tema Escuro',
       description: 'Alterar tema do aplicativo',
-      onPress: () => setTemaEscuro(!temaEscuro),
+      onPress: handleToggleTemaEscuro,
       rightElement: (
         <Switch
           value={temaEscuro}
-          onValueChange={setTemaEscuro}
+          onValueChange={handleToggleTemaEscuro}
           trackColor={{ false: colors.gray[300], true: colors.primary[500] }}
         />
       ),
@@ -150,17 +234,17 @@ export default function PerfilScreen() {
       {/* Estatísticas Rápidas */}
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>42</Text>
+          <Text style={styles.statNumber}>{estatisticas.totalFlashcards}</Text>
           <Text style={styles.statLabel}>Flashcards</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>28</Text>
+          <Text style={styles.statNumber}>{estatisticas.dominados}</Text>
           <Text style={styles.statLabel}>Dominados</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>12</Text>
+          <Text style={styles.statNumber}>{estatisticas.diasEstudo}</Text>
           <Text style={styles.statLabel}>Dias</Text>
         </View>
       </View>

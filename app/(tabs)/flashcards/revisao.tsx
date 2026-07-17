@@ -94,7 +94,7 @@ export default function RevisaoScreen() {
 
   const loadData = async () => {
     try {
-      // 🔥 Busca dados do Firestore
+
       const [flashcardsSnapshot, concursosSnapshot, disciplinasSnapshot] =
         await Promise.all([
           getDocs(
@@ -112,7 +112,6 @@ export default function RevisaoScreen() {
           ),
         ]);
 
-      // 🔥 Processa flashcards
       const flashcardsData: FlashcardReview[] = [];
       flashcardsSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -139,7 +138,6 @@ export default function RevisaoScreen() {
         } as FlashcardReview);
       });
 
-      // 🔥 Processa concursos
       const concursosData: Concurso[] = [];
       concursosSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -158,7 +156,6 @@ export default function RevisaoScreen() {
         } as Concurso);
       });
 
-      // 🔥 Processa disciplinas
       const disciplinasData: Disciplina[] = [];
       disciplinasSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -226,7 +223,6 @@ export default function RevisaoScreen() {
       erros: isCorrect ? prev.erros : prev.erros + 1,
     }));
 
-    // 🔥 Atualiza flashcard no Firestore
     try {
       const cardRef = doc(flashcardCollection, currentCard.id);
       const newAcertos = (currentCard.acertos || 0) + (isCorrect ? 1 : 0);

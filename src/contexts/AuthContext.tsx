@@ -1,16 +1,16 @@
 import {
-  getRedirectResult,
   GoogleAuthProvider,
-  initializeAuth,
+  getRedirectResult,
+  onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithRedirect,
+  signOut
 } from "firebase/auth";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { mockAuthService, UsuarioMock } from "../mocks/auth.mock";
-import { app, auth } from "../services/firebase";
+import { auth } from "../services/firebase";
 
 interface AuthContextData {
-  user: UsuarioMock | null;
+  user: any;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, senha: string) => Promise<void>;
@@ -24,48 +24,47 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<UsuarioMock | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Verifica se há usuário logado (mock)
-    const loadUser = async () => {
-      try {
-        const currentUser = await mockAuthService.getCurrentUser();
-        setUser(currentUser);
-      } catch (error) {
-        console.error("Erro ao carregar usuário:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    loadUser();
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser({
+          id: firebaseUser.uid,
+          nome: firebaseUser.displayName || "Usuário",
+          email: firebaseUser.email,
+          avatar: "👤",
+        });
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return unsubscribe;
   }, []);
 
   const loginWithGoogle = async () => {
     setIsLoading(() => true);
     try {
       const provider = new GoogleAuthProvider();
-      // const persistence = getReactNativePersistence(ReactNativeAsyncStorage);
-      const auth = initializeAuth(app, {
-        // persistence,
-      });
       signInWithRedirect(auth, provider);
 
       // Para capturar o resultado após o retorno à página:
       getRedirectResult(auth)
-        .then((result) => {
+        .then((result: any) => {
           if (result) {
             const credential = GoogleAuthProvider.credentialFromResult(result);
             const token = credential!.accessToken;
             const user = result.user;
           }
         })
-        .catch((error) => {
+        .catch((error: any) => {
           console.error(error);
         });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao fazer login com Google:", error);
     } finally {
       setIsLoading(() => false);
@@ -98,9 +97,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const logout = async () => {
     setIsLoading(() => true);
     try {
-      await mockAuthService.logout();
+      await signOut(auth);
       setUser(null);
-      // await AsyncStorage.removeItem("@Flash:auth_token");
     } finally {
       setIsLoading(() => false);
     }
@@ -109,9 +107,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const register = async (nome: string, email: string, senha: string) => {
     setIsLoading(() => true);
     try {
-      const response = await mockAuthService.register(nome, email, senha);
-      setUser(response.user);
-      localStorage.setItem("@auth_token", response.token);
+      // Registration should be implemented with createUserWithEmailAndPassword
+      // For now, this is a placeholder
+      throw new Error("Registro não implementado");
     } finally {
       setIsLoading(() => false);
     }

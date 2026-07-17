@@ -39,7 +39,7 @@ export default function HomeScreen() {
 
   const loadData = async () => {
     try {
-      // 🔥 Busca dados do Firestore
+
       const [concursosSnapshot, disciplinasSnapshot, flashcardsSnapshot] =
         await Promise.all([
           getDocs(query(concursoCollection, where("active", "==", true))),

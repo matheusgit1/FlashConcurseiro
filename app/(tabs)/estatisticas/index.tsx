@@ -1,18 +1,14 @@
-// import { mockConcursoService } from "@/mocks/concursos.mock";
-// import { mockDisciplinaService } from "@/mocks/disciplinas.mock";
-// import { mockFlashcardService } from "@/mocks/flashcards.mock";
-// import { colors, shadows, spacing } from "@/styles/theme";
-// import { Concurso } from "@/types/concurso.types";
-// import { Disciplina } from "@/types/disciplina.types";
-// import { FlashcardReview } from "@/types/flashcard.types";
-import { mockConcursoService } from "@/src/mocks/concursos.mock";
-import { mockDisciplinaService } from "@/src/mocks/disciplinas.mock";
-import { mockFlashcardService } from "@/src/mocks/flashcards.mock";
+import {
+  concursoCollection,
+  disciplinaCollection,
+  flashcardCollection,
+} from "@/src/services/firebase";
 import { colors, shadows, spacing } from "@/src/styles/theme";
 import { Concurso } from "@/src/types/concurso.types";
 import { Disciplina } from "@/src/types/disciplina.types";
 import { FlashcardReview } from "@/src/types/flashcard.types";
 import { useRouter } from "expo-router";
+import { getDocs, orderBy, query, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -31,20 +27,89 @@ export default function EstatisticasScreen() {
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedPeriodo, setSelectedPeriodo] = useState<
-    "7d" | "30d" | "90d" | "all"
-  >("all");
 
   const loadData = async () => {
     try {
-      const [flashcardsData, concursosData, disciplinasData] =
+      // 🔥 Busca dados do Firestore
+      const [flashcardsSnapshot, concursosSnapshot, disciplinasSnapshot] =
         await Promise.all([
-          mockFlashcardService.getForReview(),
-          mockConcursoService.getAll(),
-          mockDisciplinaService.getAll(),
+          getDocs(
+            query(flashcardCollection, where("active", "==", true))
+          ),
+          getDocs(
+            query(concursoCollection, where("active", "==", true))
+          ),
+          getDocs(
+            query(
+              disciplinaCollection,
+              where("active", "==", true),
+              orderBy("ordem", "asc")
+            )
+          ),
         ]);
 
-      setFlashcards(flashcardsData as FlashcardReview[]);
+      // 🔥 Processa flashcards
+      const flashcardsData: FlashcardReview[] = [];
+      flashcardsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        flashcardsData.push({
+          id: doc.id,
+          pergunta: data.pergunta,
+          resposta: data.resposta,
+          dica: data.dica,
+          concursoId: data.concursoId,
+          disciplinaId: data.disciplinaId,
+          dificuldade: data.dificuldade || 1,
+          tags: data.tags || [],
+          tipo: data.tipo || "texto",
+          midiaUrl: data.midiaUrl,
+          revisoes: data.revisoes || 0,
+          ultimaRevisao: data.ultimaRevisao,
+          proximaRevisao: data.proximaRevisao,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+          status: data.status || "new",
+          acertos: data.acertos || 0,
+          erros: data.erros || 0,
+          nivelDominio: data.nivelDominio || 0,
+        } as FlashcardReview);
+      });
+
+      // 🔥 Processa concursos
+      const concursosData: Concurso[] = [];
+      concursosSnapshot.forEach((doc) => {
+        const data = doc.data();
+        concursosData.push({
+          id: doc.id,
+          nome: data.nome,
+          descricao: data.descricao,
+          instituicao: data.instituicao,
+          nivel: data.nivel,
+          ano: data.ano,
+          disciplinas: data.disciplinas || [],
+          totalFlashcards: data.totalFlashcards || 0,
+          active: data.active || false,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        } as Concurso);
+      });
+
+      // 🔥 Processa disciplinas
+      const disciplinasData: Disciplina[] = [];
+      disciplinasSnapshot.forEach((doc) => {
+        const data = doc.data();
+        disciplinasData.push({
+          id: doc.id,
+          nome: data.nome,
+          icone: data.icone,
+          cor: data.cor,
+          descricao: data.descricao,
+          ordem: data.ordem || 0,
+          createdAt: data.createdAt,
+        } as Disciplina);
+      });
+
+      setFlashcards(flashcardsData);
       setConcursos(concursosData);
       setDisciplinas(disciplinasData);
     } catch (error) {
@@ -66,23 +131,23 @@ export default function EstatisticasScreen() {
 
   // Cálculo das estatísticas
   const totalFlashcards = flashcards.length;
-  const masteredCount = flashcards.filter((f) => f.nivelDominio >= 4).length;
+  const masteredCount = flashcards.filter((f) => f.nivelDominio >= 4).length || 0;
   const learningCount = flashcards.filter(
-    (f) => f.status === "learning",
-  ).length;
-  const newCount = flashcards.filter((f) => f.status === "new").length;
-  const reviewCount = flashcards.filter((f) => f.status === "review").length;
+    (f) => f.status === "learning"
+  ).length || 0;
+  const newCount = flashcards.filter((f) => f.status === "new").length || 0;
+  const reviewCount = flashcards.filter((f) => f.status === "review").length || 0;
 
-  // Taxa de acerto geral (mock)
+  // Taxa de acerto geral
   const taxaAcertoTotal =
     flashcards.length > 0
       ? Math.round(
           (flashcards.reduce(
-            (acc, f) => acc + f.acertos / (f.acertos + f.erros || 1),
-            0,
+            (acc, f) => acc + (f.acertos / (f.acertos + f.erros || 1)),
+            0
           ) /
             flashcards.length) *
-            100,
+            100
         )
       : 0;
 
@@ -100,7 +165,7 @@ export default function EstatisticasScreen() {
     ...d,
     count: flashcards.filter((f) => f.disciplinaId === d.id).length,
     mastered: flashcards.filter(
-      (f) => f.disciplinaId === d.id && f.nivelDominio >= 4,
+      (f) => f.disciplinaId === d.id && f.nivelDominio >= 4
     ).length,
   }));
 
@@ -109,7 +174,7 @@ export default function EstatisticasScreen() {
     ...c,
     count: flashcards.filter((f) => f.concursoId === c.id).length,
     mastered: flashcards.filter(
-      (f) => f.concursoId === c.id && f.nivelDominio >= 4,
+      (f) => f.concursoId === c.id && f.nivelDominio >= 4
     ).length,
   }));
 
@@ -150,7 +215,9 @@ export default function EstatisticasScreen() {
           </Text>
           <Text style={styles.statLabel}>Total</Text>
         </View>
-        <View style={[styles.statCard, { backgroundColor: colors.green[500] }]}>
+        <View
+          style={[styles.statCard, { backgroundColor: colors.green[500] }]}
+        >
           <Text style={[styles.statNumber, { color: colors.green[500] }]}>
             {masteredCount}
           </Text>
@@ -216,7 +283,7 @@ export default function EstatisticasScreen() {
                   style={[
                     styles.barFill,
                     {
-                      width: `${(item.mastered / item.count) * 100}%`,
+                      width: item.count > 0 ? `${(item.mastered / item.count) * 100}%` : "0%",
                       backgroundColor: item.cor,
                     },
                   ]}
@@ -224,6 +291,9 @@ export default function EstatisticasScreen() {
               </View>
             </TouchableOpacity>
           ))}
+        {flashcardsPorDisciplina.filter((d) => d.count > 0).length === 0 && (
+          <Text style={styles.emptyText}>Nenhum flashcard encontrado</Text>
+        )}
       </View>
 
       {/* Distribuição por Concurso */}
@@ -252,7 +322,7 @@ export default function EstatisticasScreen() {
                   style={[
                     styles.barFill,
                     {
-                      width: `${(item.mastered / item.count) * 100}%`,
+                      width: item.count > 0 ? `${(item.mastered / item.count) * 100}%` : "0%",
                       backgroundColor: colors.primary[400],
                     },
                   ]}
@@ -287,8 +357,8 @@ export default function EstatisticasScreen() {
                           item.nivel <= 2
                             ? colors.green[500]
                             : item.nivel <= 3
-                              ? colors.orange[500]
-                              : colors.red[500],
+                            ? colors.orange[500]
+                            : colors.red[500],
                       },
                     ]}
                   />
@@ -333,7 +403,7 @@ export default function EstatisticasScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.gray[50],
     paddingHorizontal: spacing.lg,
   },
   loadingContainer: {

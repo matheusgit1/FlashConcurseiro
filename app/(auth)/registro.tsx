@@ -14,7 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// import { colors, spacing } from '@/styles/theme';
+
 
 export default function RegistroScreen() {
   const router = useRouter();

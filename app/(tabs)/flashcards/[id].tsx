@@ -39,7 +39,6 @@ export default function FlashcardDetailScreen() {
       if (!id) return;
 
       try {
-        // 🔥 Busca o flashcard específico do Firestore
         const flashcardDoc = await getDoc(
           doc(flashcardCollection, id as string)
         );
@@ -55,13 +54,11 @@ export default function FlashcardDetailScreen() {
           ...flashcardDoc.data(),
         } as FlashcardReview;
 
-        // 🔥 Busca concurso e disciplina
         const [concursoDoc, disciplinaDoc] = await Promise.all([
           getDoc(doc(concursoCollection, flashcardData.concursoId)),
           getDoc(doc(disciplinaCollection, flashcardData.disciplinaId)),
         ]);
 
-        // 🔥 Busca todos os flashcards da mesma disciplina para navegação
         const allFlashcardsSnapshot = await getDocs(
           query(
             flashcardCollection,
@@ -88,7 +85,7 @@ export default function FlashcardDetailScreen() {
         setAllFlashcards(flashcardsList);
         setCurrentIndex(index !== -1 ? index : 0);
 
-        // 🔥 Atualiza o título da tela
+    
         // navigation.setOptions({
         //   title: flashcardData.pergunta.length > 25 
         //     ? flashcardData.pergunta.substring(0, 25) + '...' 
@@ -147,7 +144,7 @@ export default function FlashcardDetailScreen() {
       `Nível de domínio: ${getNivelLabel(nivel)}`,
       [{ text: "OK" }]
     );
-    // 🔥 Salva no Firestore
+
     try {
       // Atualiza o documento do flashcard com o novo nível de domínio
       updateDoc(doc(flashcardCollection, flashcard!.id), {
@@ -350,7 +347,7 @@ export default function FlashcardDetailScreen() {
           onPress={() => {
             setMostrarResposta(false);
             Alert.alert("✅ Revisão", "Flashcard marcado como revisado!");
-            // 🔥 Incrementa o contador de revisões
+     
             // updateDoc(doc(flashcardCollection, flashcard.id), {
             //   revisoes: (flashcard.revisoes || 0) + 1,
             //   ultimaRevisao: new Date().toISOString(),
