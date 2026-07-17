@@ -1,9 +1,10 @@
-import { mockConcursoService } from "@/src/mocks/concursos.mock";
-import { mockDisciplinaService } from "@/src/mocks/disciplinas.mock";
-import { mockFlashcardService } from "@/src/mocks/flashcards.mock";
+import { concursoCollection, disciplinaCollection, flashcardCollection } from "@/src/services/firebase";
 import { colors, shadows, spacing } from "@/src/styles/theme";
+import { Concurso } from "@/src/types/concurso.types";
+import { Disciplina } from "@/src/types/disciplina.types";
 import { FlashcardReview } from "@/src/types/flashcard.types";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { doc, getDocs, orderBy, query, updateDoc, where } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -18,13 +19,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// import { mockFlashcardService } from '@/mocks/flashcards.mock';
-// import { mockDisciplinaService } from '@/mocks/disciplinas.mock';
-// import { mockConcursoService } from '@/mocks/concursos.mock';
-// import { FlashcardReview } from '@/types/flashcard.types';
-// import { Disciplina } from '@/types/disciplina.types';
-// import { Concurso } from '@/types/concurso.types';
-// import { colors, spacing, shadows } from '@/styles/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SWIPE_THRESHOLD = 120;
@@ -37,6 +31,8 @@ export default function RevisaoScreen() {
   }>();
 
   const [flashcards, setFlashcards] = useState<FlashcardReview[]>([]);
+  const [concursos, setConcursos] = useState<Concurso[]>([]);
+  const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -73,8 +69,7 @@ export default function RevisaoScreen() {
       extrapolate: "clamp",
     }),
   ).current;
-
-  // PanResponder para swipe
+  
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -99,27 +94,107 @@ export default function RevisaoScreen() {
 
   const loadData = async () => {
     try {
-      let flashcardsData = await mockFlashcardService.getForReview();
+      // 🔥 Busca dados do Firestore
+      const [flashcardsSnapshot, concursosSnapshot, disciplinasSnapshot] =
+        await Promise.all([
+          getDocs(
+            query(flashcardCollection, where("active", "==", true))
+          ),
+          getDocs(
+            query(concursoCollection, where("active", "==", true))
+          ),
+          getDocs(
+            query(
+              disciplinaCollection,
+              where("active", "==", true),
+              orderBy("ordem", "asc")
+            )
+          ),
+        ]);
+
+      // 🔥 Processa flashcards
+      const flashcardsData: FlashcardReview[] = [];
+      flashcardsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        flashcardsData.push({
+          id: doc.id,
+          pergunta: data.pergunta,
+          resposta: data.resposta,
+          dica: data.dica,
+          concursoId: data.concursoId,
+          disciplinaId: data.disciplinaId,
+          dificuldade: data.dificuldade || 1,
+          tags: data.tags || [],
+          tipo: data.tipo || "texto",
+          midiaUrl: data.midiaUrl,
+          revisoes: data.revisoes || 0,
+          ultimaRevisao: data.ultimaRevisao,
+          proximaRevisao: data.proximaRevisao,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+          status: data.status || "new",
+          acertos: data.acertos || 0,
+          erros: data.erros || 0,
+          nivelDominio: data.nivelDominio || 0,
+        } as FlashcardReview);
+      });
+
+      // 🔥 Processa concursos
+      const concursosData: Concurso[] = [];
+      concursosSnapshot.forEach((doc) => {
+        const data = doc.data();
+        concursosData.push({
+          id: doc.id,
+          nome: data.nome,
+          descricao: data.descricao,
+          instituicao: data.instituicao,
+          nivel: data.nivel,
+          ano: data.ano,
+          disciplinas: data.disciplinas || [],
+          totalFlashcards: data.totalFlashcards || 0,
+          active: data.active || false,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        } as Concurso);
+      });
+
+      // 🔥 Processa disciplinas
+      const disciplinasData: Disciplina[] = [];
+      disciplinasSnapshot.forEach((doc) => {
+        const data = doc.data();
+        disciplinasData.push({
+          id: doc.id,
+          nome: data.nome,
+          icone: data.icone,
+          cor: data.cor,
+          descricao: data.descricao,
+          ordem: data.ordem || 0,
+          createdAt: data.createdAt,
+        } as Disciplina);
+      });
 
       // Filtros
+      let filteredFlashcards = flashcardsData;
       if (params.concurso) {
-        flashcardsData = flashcardsData.filter(
-          (f) => f.concursoId === params.concurso,
+        filteredFlashcards = filteredFlashcards.filter(
+          (f: FlashcardReview) => f.concursoId === params.concurso,
         );
       }
       if (params.disciplina) {
-        flashcardsData = flashcardsData.filter(
-          (f) => f.disciplinaId === params.disciplina,
+        filteredFlashcards = filteredFlashcards.filter(
+          (f: FlashcardReview) => f.disciplinaId === params.disciplina,
         );
       }
 
       // Embaralhar para revisão
-      flashcardsData = flashcardsData.sort(() => Math.random() - 0.5);
+      filteredFlashcards = filteredFlashcards.sort(() => Math.random() - 0.5);
 
-      setFlashcards(flashcardsData as FlashcardReview[]);
+      setFlashcards(filteredFlashcards);
+      setConcursos(concursosData);
+      setDisciplinas(disciplinasData);
       setCurrentIndex(0);
       setConcluido(false);
-      setEstatisticas({ acertos: 0, erros: 0, total: flashcardsData.length });
+      setEstatisticas({ acertos: 0, erros: 0, total: filteredFlashcards.length });
     } catch (error) {
       console.error("Erro ao carregar flashcards:", error);
       Alert.alert("Erro", "Falha ao carregar flashcards para revisão");
@@ -138,7 +213,7 @@ export default function RevisaoScreen() {
     loadData();
   };
 
-  const handleSwipe = (direction: "left" | "right") => {
+  const handleSwipe = async (direction: "left" | "right") => {
     const isCorrect = direction === "right";
     const currentCard = flashcards[currentIndex];
 
@@ -151,21 +226,36 @@ export default function RevisaoScreen() {
       erros: isCorrect ? prev.erros : prev.erros + 1,
     }));
 
-    // Feedback visual
-    if (isCorrect) {
-      // Marcar como dominado (mock)
-      // Alert.alert("✅", "Resposta correta! Continue assim!", [{ text: "OK" }]);
-    } else {
-      // Alert.alert("❌", "Resposta incorreta. Revise o conteúdo!", [
-      //   { text: "OK" },
-      //   {
-      //     text: "Ver Resposta",
-      //     onPress: () => {
-      //       setMostrarResposta(true);
-      //       setTimeout(() => setMostrarResposta(false), 3000);
-      //     },
-      //   },
-      // ]);
+    // 🔥 Atualiza flashcard no Firestore
+    try {
+      const cardRef = doc(flashcardCollection, currentCard.id);
+      const newAcertos = (currentCard.acertos || 0) + (isCorrect ? 1 : 0);
+      const newErros = (currentCard.erros || 0) + (isCorrect ? 0 : 1);
+      const newRevisoes = (currentCard.revisoes || 0) + 1;
+      
+      // Calcula novo status baseado no desempenho
+      let newStatus = currentCard.status;
+      const taxaAcerto = newAcertos / (newAcertos + newErros);
+      
+      if (newRevisoes >= 3 && taxaAcerto >= 0.8) {
+        newStatus = "mastered";
+      } else if (newRevisoes >= 1 && taxaAcerto >= 0.6) {
+        newStatus = "review";
+      } else if (newRevisoes >= 1) {
+        newStatus = "learning";
+      }
+
+      await updateDoc(cardRef, {
+        acertos: newAcertos,
+        erros: newErros,
+        revisoes: newRevisoes,
+        ultimaRevisao: new Date().toISOString(),
+        status: newStatus,
+        nivelDominio: Math.round(taxaAcerto * 100),
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar flashcard:", error);
     }
 
     // Reseta posição
@@ -216,6 +306,16 @@ export default function RevisaoScreen() {
 
   const getDificuldadeStars = (dificuldade: number): string => {
     return "⭐".repeat(dificuldade);
+  };
+
+  const getConcursoNome = (concursoId: string): string => {
+    const concurso = concursos.find((c) => c.id === concursoId);
+    return concurso?.nome || concursoId;
+  };
+
+  const getDisciplinaNome = (disciplinaId: string): string => {
+    const disciplina = disciplinas.find((d) => d.id === disciplinaId);
+    return disciplina?.nome || disciplinaId;
   };
 
   const reiniciarRevisao = () => {
@@ -450,14 +550,10 @@ export default function RevisaoScreen() {
         {/* Meta Info */}
         <View style={styles.cardMeta}>
           <Text style={styles.cardMetaText}>
-            {mockDisciplinaService
-              .getById(currentCard.disciplinaId)
-              .then((d) => d?.nome || "")}
+            {getDisciplinaNome(currentCard.disciplinaId)}
           </Text>
           <Text style={styles.cardMetaText}>
-            {mockConcursoService
-              .getById(currentCard.concursoId)
-              .then((c) => c?.nome || "")}
+            {getConcursoNome(currentCard.concursoId)}
           </Text>
         </View>
       </Animated.View>

@@ -1,11 +1,10 @@
-import { mockConcursoService } from "@/src/mocks/concursos.mock";
-import { mockDisciplinaService } from "@/src/mocks/disciplinas.mock";
-import { mockFlashcardService } from "@/src/mocks/flashcards.mock";
+import { concursoCollection, disciplinaCollection, flashcardCollection } from "@/src/services/firebase";
 import { colors, shadows, spacing } from "@/src/styles/theme";
 import { Concurso } from "@/src/types/concurso.types";
 import { Disciplina } from "@/src/types/disciplina.types";
 import { FlashcardReview } from "@/src/types/flashcard.types";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { getDocs, orderBy, query, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -48,24 +47,91 @@ export default function FlashcardsScreen() {
 
   const loadData = async () => {
     try {
-      // Carrega todos os dados em paralelo
-      const [flashcardsData, concursosData, disciplinasData] =
+      // 🔥 Busca dados do Firestore
+      const [flashcardsSnapshot, concursosSnapshot, disciplinasSnapshot] =
         await Promise.all([
-          mockFlashcardService.getForReview(),
-          mockConcursoService.getAll(),
-          mockDisciplinaService.getAll(),
+          getDocs(
+            query(flashcardCollection, where("active", "==", true))
+          ),
+          getDocs(
+            query(concursoCollection, where("active", "==", true))
+          ),
+          getDocs(
+            query(
+              disciplinaCollection,
+              where("active", "==", true),
+              orderBy("ordem", "asc")
+            )
+          ),
         ]);
 
-      setFlashcards(flashcardsData as FlashcardReview[]);
+      // 🔥 Processa flashcards
+      const flashcardsData: FlashcardReview[] = [];
+      flashcardsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        flashcardsData.push({
+          id: doc.id,
+          pergunta: data.pergunta,
+          resposta: data.resposta,
+          dica: data.dica,
+          concursoId: data.concursoId,
+          disciplinaId: data.disciplinaId,
+          dificuldade: data.dificuldade || 1,
+          tags: data.tags || [],
+          tipo: data.tipo || "texto",
+          midiaUrl: data.midiaUrl,
+          revisoes: data.revisoes || 0,
+          ultimaRevisao: data.ultimaRevisao,
+          proximaRevisao: data.proximaRevisao,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+          status: data.status || "new",
+          acertos: data.acertos || 0,
+          erros: data.erros || 0,
+          nivelDominio: data.nivelDominio || 0,
+        } as FlashcardReview);
+      });
+
+      // 🔥 Processa concursos
+      const concursosData: Concurso[] = [];
+      concursosSnapshot.forEach((doc) => {
+        const data = doc.data();
+        concursosData.push({
+          id: doc.id,
+          nome: data.nome,
+          descricao: data.descricao,
+          instituicao: data.instituicao,
+          nivel: data.nivel,
+          ano: data.ano,
+          disciplinas: data.disciplinas || [],
+          totalFlashcards: data.totalFlashcards || 0,
+          active: data.active || false,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        } as Concurso);
+      });
+
+      // 🔥 Processa disciplinas
+      const disciplinasData: Disciplina[] = [];
+      disciplinasSnapshot.forEach((doc) => {
+        const data = doc.data();
+        disciplinasData.push({
+          id: doc.id,
+          nome: data.nome,
+          icone: data.icone,
+          cor: data.cor,
+          descricao: data.descricao,
+          ordem: data.ordem || 0,
+          createdAt: data.createdAt,
+        } as Disciplina);
+      });
+
+      setFlashcards(flashcardsData);
       setConcursos(concursosData);
       setDisciplinas(disciplinasData);
 
       // Aplica filtros iniciais
-      applyFilters(
-        flashcardsData as FlashcardReview[],
-        params.concurso,
-        params.disciplina,
-      );
+      applyFilters(flashcardsData, params.concurso, params.disciplina);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -74,10 +140,11 @@ export default function FlashcardsScreen() {
     }
   };
 
-  const applyFilters = (
+
+const applyFilters = (
     data: FlashcardReview[],
     concursoId?: string,
-    disciplinaId?: string,
+    disciplinaId?: string
   ) => {
     let filtered = [...data];
 
@@ -104,12 +171,13 @@ export default function FlashcardsScreen() {
       filtered = filtered.filter(
         (f) =>
           f.pergunta.toLowerCase().includes(term) ||
-          f.resposta.toLowerCase().includes(term),
+          f.resposta.toLowerCase().includes(term)
       );
     }
 
-    setFilteredFlashcards(() => filtered);
+    setFilteredFlashcards(filtered);
   };
+
 
   useEffect(() => {
     loadData();
@@ -134,17 +202,16 @@ export default function FlashcardsScreen() {
     return labels[status] || status;
   };
 
-  const getStatusColor = (
-    status: "new" | "learning" | "review" | "mastered",
-  ): string => {
-    const colors: Record<string, string> = {
+  const getStatusColor = (status: string): string => {
+    const colorMap: Record<string, string> = {
       new: "#9CA3AF",
       learning: "#F59E0B",
       review: "#3B82F6",
       mastered: "#10B981",
     };
-    return colors[status] || "#9CA3AF";
+    return colorMap[status] || "#9CA3AF";
   };
+
 
   const getDificuldadeStars = (dificuldade: number): string => {
     return "⭐".repeat(dificuldade);
@@ -166,11 +233,19 @@ export default function FlashcardsScreen() {
   };
 
   const clearFilters = () => {
-    setSearchTerm("");
-    setSelectedConcurso("");
-    setSelectedDisciplina("");
-    setFilterDificuldade(null);
+    setSearchTerm(() => "");
+    setSelectedConcurso(() => "");
+    setSelectedDisciplina(() => "");
+    setFilterDificuldade(() => null);
   };
+
+  const uniqueConcursos = concursos.filter((c) =>
+    flashcards.some((f) => f.concursoId === c.id)
+  );
+
+  const uniqueDisciplinas = disciplinas.filter((d) =>
+    flashcards.some((f) => f.disciplinaId === d.id)
+  );
 
   if (loading) {
     return (
@@ -194,112 +269,64 @@ export default function FlashcardsScreen() {
       </View>
 
       {/* Filtros */}
-      {/* <ScrollView
+      <FlatList
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.filtersContainer}
         contentContainerStyle={styles.filtersContent}
-      >
-        <TouchableOpacity
-          style={[
-            styles.filterChip,
-            !selectedConcurso &&
-              !selectedDisciplina &&
-              !filterDificuldade &&
-              styles.filterChipActive,
-          ]}
-          onPress={clearFilters}
-        >
-          <Text
-            style={[
-              styles.filterChipText,
-              !selectedConcurso &&
-                !selectedDisciplina &&
-                !filterDificuldade &&
-                styles.filterChipTextActive,
-            ]}
-          >
-            Todos
-          </Text>
-        </TouchableOpacity>
+        data={[
+          { id: "todos", label: "Todos", type: "all" },
+          ...uniqueConcursos.map((c) => ({
+            id: c.id,
+            label: c.nome.substring(0, 15),
+            type: "concurso",
+          })),
+          ...uniqueDisciplinas.map((d) => ({
+            id: d.id,
+            label: `${d.icone} ${d.nome.substring(0, 12)}`,
+            type: "disciplina",
+          })),
+        ]}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => {
+          const isActive =
+            item.id === "todos"
+              ? !selectedConcurso && !selectedDisciplina && !filterDificuldade
+              : item.type === "concurso"
+              ? selectedConcurso === item.id
+              : selectedDisciplina === item.id;
 
-        <TouchableOpacity
-          style={[
-            styles.filterChip,
-            selectedConcurso && styles.filterChipActive,
-          ]}
-          onPress={() => {
-            if (selectedConcurso) {
-              setSelectedConcurso("");
-            } else {
-              // Mostra um alerta ou abre um modal para selecionar concurso
-              // Por enquanto, vamos apenas limpar ou definir um valor fixo para demo
-              setSelectedConcurso("bb_2025");
-            }
-          }}
-        >
-          <Text
-            style={[
-              styles.filterChipText,
-              selectedConcurso && styles.filterChipTextActive,
-            ]}
-          >
-            {selectedConcurso
-              ? getConcursoNome(selectedConcurso).substring(0, 15)
-              : "📚 Concurso"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.filterChip,
-            selectedDisciplina && styles.filterChipActive,
-          ]}
-          onPress={() => {
-            if (selectedDisciplina) {
-              setSelectedDisciplina("");
-            } else {
-              setSelectedDisciplina("portugues");
-            }
-          }}
-        >
-          <Text
-            style={[
-              styles.filterChipText,
-              selectedDisciplina && styles.filterChipTextActive,
-            ]}
-          >
-            {selectedDisciplina
-              ? getDisciplinaIcon(selectedDisciplina) +
-                " " +
-                getDisciplinaNome(selectedDisciplina).substring(0, 12)
-              : "📖 Disciplina"}
-          </Text>
-        </TouchableOpacity> */}
-
-      {/* <TouchableOpacity
-          style={[
-            styles.filterChip,
-            // filterDificuldade && styles.filterChipActive,
-          ]}
-          onPress={() => {
-            if (filterDificuldade) {
-              setFilterDificuldade(null);
-            } else {
-              setFilterDificuldade(3);
-            }
-          }}
-        >
-          <Text
-            style={[
-              styles.filterChipText,
-              // filterDificuldade && styles.filterChipTextActive,
-            ]}
-          >
-            {filterDificuldade ? `⭐ ${filterDificuldade}` : "⭐ Dificuldade"}
-          </Text>
-        </TouchableOpacity> */}
-      {/* </ScrollView> */}
+          return (
+            <TouchableOpacity
+              style={[styles.filterChip, isActive && styles.filterChipActive]}
+              onPress={() => {
+                if (item.id === "todos") {
+                  clearFilters();
+                } else if (item.type === "concurso") {
+                  setSelectedConcurso(
+                    selectedConcurso === item.id ? "" : item.id
+                  );
+                  setSelectedDisciplina("");
+                } else {
+                  setSelectedDisciplina(
+                    selectedDisciplina === item.id ? "" : item.id
+                  );
+                  setSelectedConcurso("");
+                }
+              }}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  isActive && styles.filterChipTextActive,
+                ]}
+              >
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        }}
+      />
 
       {/* Estatísticas */}
       <View style={styles.statsContainer}>
@@ -308,9 +335,11 @@ export default function FlashcardsScreen() {
           {flashcards.length !== filteredFlashcards.length &&
             ` (de ${flashcards.length})`}
         </Text>
-        <TouchableOpacity onPress={clearFilters}>
-          <Text style={styles.clearFiltersText}>Limpar filtros</Text>
-        </TouchableOpacity>
+        {(selectedConcurso || selectedDisciplina || filterDificuldade) && (
+          <TouchableOpacity onPress={clearFilters}>
+            <Text style={styles.clearFiltersText}>Limpar filtros</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Lista de Flashcards */}
@@ -332,7 +361,7 @@ export default function FlashcardsScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
-            onPress={() => router.push(`/flashcards/${item.id}`, {})}
+            onPress={() => router.push(`/flashcards/${item.id}`)}
           >
             <View style={styles.cardHeader}>
               <View style={styles.cardBadges}>
