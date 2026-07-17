@@ -1,7 +1,12 @@
-import { mockConcursoService } from "@/src/mocks/concursos.mock";
+import {
+  concursoCollection,
+  disciplinaCollection,
+  flashcardCollection,
+} from "@/src/services/firebase";
 import { colors, shadows, spacing } from "@/src/styles/theme";
 import { Concurso } from "@/src/types/concurso.types";
 import { useRouter } from "expo-router";
+import { getDocs, orderBy, query, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -24,8 +29,25 @@ export default function ConcursosListScreen() {
 
   const loadData = async () => {
     try {
-      const data = await mockConcursoService.getAll();
-      setConcursos(data);
+      const [concursoSnapshot, disciplinasSnapshot, flashcardsSnapshot] =
+        await Promise.all([
+          // Busca o concurso específico
+          getDocs(query(concursoCollection, where("active", "==", true))),
+          // Busca todas as disciplinas ativas
+          getDocs(
+            query(
+              disciplinaCollection,
+              where("active", "==", true),
+              orderBy("ordem", "asc"),
+            ),
+          ),
+          // Busca todos os flashcards
+          getDocs(flashcardCollection),
+        ]);
+
+      setConcursos(
+        () => concursoSnapshot.docs.map((doc) => doc.data()) as Concurso[],
+      );
     } catch (error) {
       console.error("Erro ao carregar concursos:", error);
     } finally {

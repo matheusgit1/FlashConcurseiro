@@ -1,18 +1,14 @@
-// import { mockConcursoService } from "@/mocks/concursos.mock";
-// import { mockDisciplinaService } from "@/mocks/disciplinas.mock";
-// import { mockFlashcardService } from "@/mocks/flashcards.mock";
-// import { colors, shadows, spacing } from "@/styles/theme";
-// import { Concurso } from "@/types/concurso.types";
-// import { DisciplinaCompleta } from "@/types/disciplina.types";
-// import { FlashcardReview } from "@/types/flashcard.types";
-import { mockConcursoService } from "@/src/mocks/concursos.mock";
-import { mockDisciplinaService } from "@/src/mocks/disciplinas.mock";
-import { mockFlashcardService } from "@/src/mocks/flashcards.mock";
+import {
+  concursoCollection,
+  disciplinaCollection,
+  flashcardCollection,
+} from "@/src/services/firebase";
 import { colors, shadows, spacing } from "@/src/styles/theme";
 import { Concurso } from "@/src/types/concurso.types";
 import { DisciplinaCompleta } from "@/src/types/disciplina.types";
 import { FlashcardReview } from "@/src/types/flashcard.types";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { getDocs, query, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -37,24 +33,115 @@ export default function DisciplinaDetailScreen() {
     if (!id) return;
 
     try {
-      const [disciplinaData, flashcardsData, concursosData] = await Promise.all(
-        [
-          mockDisciplinaService
-            .getCompletas()
-            .then((ds) => ds.find((d) => d.id === id)),
-          mockFlashcardService.getByDisciplinaId(id),
-          mockConcursoService.getAll(),
-        ],
-      );
+      // 🔥 Busca dados do Firestore
+      const [disciplinaSnapshot, flashcardsSnapshot, concursosSnapshot] =
+        await Promise.all([
+          // Busca a disciplina específica
+          getDocs(
+            query(
+              disciplinaCollection,
+              where("id", "==", id),
+              where("active", "==", true),
+            ),
+          ),
+          // Busca flashcards da disciplina
+          getDocs(
+            query(
+              flashcardCollection,
+              where("disciplinaId", "==", id),
+              where("active", "==", true),
+            ),
+          ),
+          // Busca concursos ativos
+          getDocs(query(concursoCollection, where("active", "==", true))),
+        ]);
 
-      setDisciplina(disciplinaData || null);
-      setFlashcards(flashcardsData as FlashcardReview[]);
+      // 🔥 Processa disciplina
+      let disciplinaData: DisciplinaCompleta = {
+        totalFlashcards: 0,
+        progresso: 0,
+        ultimaRevisao: "",
+        id: "",
+        nome: "",
+        icone: "",
+        cor: "",
+        descricao: "",
+        ordem: 0,
+      };
+      disciplinaSnapshot.forEach((doc) => {
+        const data = doc.data();
+        disciplinaData = {
+          id: doc.id,
+          nome: data.nome,
+          icone: data.icone,
+          cor: data.cor,
+          descricao: data.descricao,
+          ordem: data.ordem,
+          totalFlashcards: 0,
+          progresso: 0,
+        };
+      });
 
-      // Filtrar concursos que têm essa disciplina
-      const concursosComDisciplina = concursosData.filter((c) =>
-        c.disciplinas.includes(id),
-      );
-      setConcursos(concursosComDisciplina);
+      if (!disciplinaData) {
+        setLoading(false);
+        return;
+      }
+
+      // 🔥 Processa flashcards
+      const flashcardsData: FlashcardReview[] = [];
+      flashcardsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        flashcardsData.push({
+          id: doc.id,
+          pergunta: data.pergunta,
+          resposta: data.resposta,
+          dica: data.dica,
+          concursoId: data.concursoId,
+          disciplinaId: data.disciplinaId,
+          dificuldade: data.dificuldade || 1,
+          tags: data.tags || [],
+          tipo: data.tipo || "texto",
+          midiaUrl: data.midiaUrl,
+          revisoes: data.revisoes || 0,
+          ultimaRevisao: data.ultimaRevisao,
+          proximaRevisao: data.proximaRevisao,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+          status: data.status || "new",
+          acertos: data.acertos || 0,
+          erros: data.erros || 0,
+          nivelDominio: data.nivelDominio || 0,
+        } as FlashcardReview);
+      });
+
+      // 🔥 Processa concursos
+      const concursosData: Concurso[] = [];
+      concursosSnapshot.forEach((doc) => {
+        const data = doc.data();
+        // Verifica se o concurso tem essa disciplina
+        if (data.disciplinas && data.disciplinas.includes(id)) {
+          concursosData.push({
+            id: doc.id,
+            nome: data.nome,
+            descricao: data.descricao,
+            instituicao: data.instituicao,
+            nivel: data.nivel,
+            ano: data.ano,
+            disciplinas: data.disciplinas || [],
+            totalFlashcards: data.totalFlashcards || 0,
+            active: data.active || false,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+          } as Concurso);
+        }
+      });
+
+      // Atualiza total de flashcards na disciplina
+      disciplinaData.totalFlashcards = flashcardsData.length;
+
+      setDisciplina(disciplinaData);
+      setFlashcards(flashcardsData);
+      setConcursos(concursosData);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {

@@ -1,9 +1,13 @@
-import { mockConcursoService } from "@/src/mocks/concursos.mock";
-import { mockDisciplinaService } from "@/src/mocks/disciplinas.mock";
+import {
+  concursoCollection,
+  disciplinaCollection,
+  flashcardCollection,
+} from "@/src/services/firebase";
 import { colors, shadows, spacing } from "@/src/styles/theme";
 import { Concurso } from "@/src/types/concurso.types";
 import { Disciplina } from "@/src/types/disciplina.types";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { getDocs, orderBy, query, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -13,11 +17,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// import { mockConcursoService } from '@/mocks/concursos.mock';
-// import { mockDisciplinaService } from '@/mocks/disciplinas.mock';
-// import { Concurso } from '@/types/concurso.types';
-// import { Disciplina } from '@/types/disciplina.types';
-// import { colors, spacing, shadows } from '@/styles/theme';
 
 export default function ConcursoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -25,18 +24,120 @@ export default function ConcursoDetailScreen() {
   const [concurso, setConcurso] = useState<Concurso | null>(null);
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalFlashcards, setTotalFlashcards] = useState<number>(0);
+  console.log("Concurso ID:", id);
 
   useEffect(() => {
     const loadData = async () => {
       if (!id) return;
 
       try {
-        const [concursoData, disciplinasData] = await Promise.all([
-          mockConcursoService.getById(id),
-          mockDisciplinaService.getByConcursoId(id),
-        ]);
+        // 🔥 Busca dados do Firestore em paralelo
+        const [concursoSnapshot, disciplinasSnapshot, flashcardsSnapshot] =
+          await Promise.all([
+            // Busca o concurso específico
+            getDocs(
+              query(
+                concursoCollection,
+                where("id", "==", id.trim()),
+                where("active", "==", true),
+              ),
+            ),
+            // Busca todas as disciplinas ativas
+            getDocs(
+              query(
+                disciplinaCollection,
+                where("active", "==", true),
+                orderBy("ordem", "asc"),
+              ),
+            ),
+            // Busca todos os flashcards
+            getDocs(
+              query(flashcardCollection, where("concursoId", "==", id.trim())),
+            ),
+          ]);
+
+        console.log(
+          "Concurso Snapshot:",
+          concursoSnapshot.docs.map((doc) => doc.data()),
+        );
+        console.log(
+          "Disciplinas Snapshot:",
+          disciplinasSnapshot.docs.map((doc) => doc.data()),
+        );
+        console.log(
+          "Flashcards Snapshot:",
+          flashcardsSnapshot.docs.map((doc) => doc.data()),
+        );
+
+        // 🔥 Processa concurso
+        let concursoData: Concurso = {
+          id: "",
+          nome: "",
+          descricao: "",
+          instituicao: "",
+          nivel: "fundamental",
+          ano: 0,
+          disciplinas: [],
+          totalFlashcards: 0,
+          active: false,
+        };
+        concursoSnapshot.forEach((doc) => {
+          const data = doc.data();
+          concursoData = {
+            id: doc.id,
+            nome: data.nome,
+            descricao: data.descricao,
+            instituicao: data.instituicao,
+            nivel: data.nivel,
+            ano: data.ano,
+            disciplinas: data.disciplinas || [],
+            totalFlashcards: data.totalFlashcards || 0,
+            active: data.active || false,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+          } as Concurso;
+        });
+
+        if (!concursoData) {
+          setLoading(false);
+          return;
+        }
+
+        // 🔥 Processa disciplinas do concurso
+        const disciplinasData: Disciplina[] = [];
+        const disciplinasIds = concursoData.disciplinas || [];
+
+        disciplinasSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (disciplinasIds.includes(doc.id)) {
+            disciplinasData.push({
+              id: doc.id,
+              nome: data.nome,
+              icone: data.icone,
+              cor: data.cor,
+              descricao: data.descricao,
+              ordem: data.ordem,
+              createdAt: data.createdAt,
+            } as Disciplina);
+          }
+        });
+
+        // 🔥 Ordena disciplinas pela ordem
+        disciplinasData.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+
+        // 🔥 Conta flashcards do concurso
+        let total = 0;
+        flashcardsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.concursoId === id) {
+            total++;
+          }
+        });
+
         setConcurso(concursoData);
         setDisciplinas(disciplinasData);
+        setTotalFlashcards(total);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       } finally {
@@ -88,7 +189,7 @@ export default function ConcursoDetailScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
-            <Text style={styles.statNumber}>{concurso.totalFlashcards}</Text>
+            <Text style={styles.statNumber}>{totalFlashcards}</Text>
             <Text style={styles.statLabel}>Flashcards</Text>
           </View>
         </View>
@@ -115,11 +216,7 @@ export default function ConcursoDetailScreen() {
               {disciplina.descricao}
             </Text>
           </View>
-          <Text style={styles.disciplinaCount}>
-            {mockDisciplinaService
-              .getByConcursoId(concurso.id)
-              .then((d) => d.length)}
-          </Text>
+          {/* <Text style={styles.disciplinaCount}>{flashcards}</Text> */}
         </TouchableOpacity>
       ))}
     </ScrollView>
