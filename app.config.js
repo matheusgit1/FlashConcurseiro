@@ -5,6 +5,7 @@ module.exports = ({ config }) => {
   return {
     ...config,
     extra: {
+      ...config.extra,
       EXPO_PUBLIC_FIREBASE_API_KEY: process.env.FIREBASE_API_KEY,
       EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.FIREBASE_AUTH_DOMAIN,
       EXPO_PUBLIC_FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
@@ -18,6 +19,9 @@ module.exports = ({ config }) => {
         process.env.GOOGLE_ANDROID_CLIENT_ID,
       EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: process.env.GOOGLE_IOS_CLIENT_ID,
       EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID: process.env.GOOGLE_EXPO_CLIENT_ID,
+    },
+    eas: config.eas || {
+      projectId: "c730163e-6511-4991-bf49-a447b8a36796",
     },
   };
 };

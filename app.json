@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.ap_matheus.FlashConcurseiro"
     },
     "web": {
       "output": "static",
@@ -43,6 +44,22 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyB0ElMdRaF7gEtdckqlBJsAYlRRvENPaHo",
+      "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "flashconcurseiro-aa8dc.firebaseapp.com",
+      "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "flashconcurseiro-aa8dc",
+      "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "flashconcurseiro-aa8dc.firebasestorage.app",
+      "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "261583670377",
+      "EXPO_PUBLIC_FIREBASE_APP_ID": "1:261583670377:web:17d13125e6c478b43726f8",
+      "EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-1MX1HNJDST",
+      "router": {},
+      "eas": {
+        "projectId": "c730163e-6511-4991-bf49-a447b8a36796"
+      }
+    },
+    "eas": {
+      "projectId": "c730163e-6511-4991-bf49-a447b8a36796"
     }
   }
 }
