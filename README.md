@@ -2,7 +2,7 @@
 
 Aplicativo mobile de flashcards para concursos públicos com sistema de repetição espaçada, arquitetura moderna e sincronização em tempo real.
 
-![FlashConcurseiro](https://github.com/matheusgit1/FlashConcurseiro/blob/main/screenshots/screenshot_2.jpeg)
+<!-- ![FlashConcurseiro](https://github.com/matheusgit1/FlashConcurseiro/blob/main/screenshots/screenshot_2.jpeg) -->
 
 ---
 
